@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .quiz-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .quiz-container h1 {
+            margin-bottom: 20px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #28a745;
+            width: 0%;
+        }
+        .question-container {
+            display: none;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .options {
+            list-style-type: none;
+            padding: 0;
+        }
+        .options div {
+            background-color: #f0f0f0;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .options div:hover {
+            background-color: #d3d3d3;
+        }
+        .submit-btn, .play-btn, .go-home-btn, .restart-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+        .score {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #28a745;
+        }
+        .taskbar {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Quiz App</h1>
+        <button class="play-btn" onclick="startQuiz()">Play</button>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="question-container">
+            <div class="question"></div>
+            <div class="options"></div>
+            <button class="submit-btn" onclick="submitQuiz()">Submit</button>
+        </div>
+        <div class="result" id="result"></div>
+        <div class="score" id="score">Score: 0</div>
+        <div class="taskbar" id="taskbar">Question: 0/0</div>
+        <button class="go-home-btn" onclick="goHome()" style="display:none;">Go Home</button>
+        <button class="restart-btn" onclick="restartQuiz()" style="display:none;">Restart</button>
+    </div>
+
+    <script>
+        let questions = [   
+            {
+                question: 'Which HTML tag is used to define an inline style?',
+                options: ['<script>', '<css>', '<style>', '<span>'],
+                correct: '<style>'
+            },
+            {
+                question: 'Which property is used to change the text color in CSS?',
+                options: ['text-color', 'font-color', 'text-style', 'color'],
+                correct: 'color'
+            },
+            {
+                question: 'Which of the following is the correct way to comment in HTML?',
+                options: ['// Comment', '<!-- Comment -->', '/* Comment */', '<! Comment>'],
+                correct: '<!-- Comment -->'
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let scoreValue = 0;
+        let selectedOptionDiv = null;
+
+        function startQuiz() {
+            document.querySelector('.play-btn').style.display = 'none';
+            document.querySelector('.question-container').style.display = 'block';
+            document.querySelector('.go-home-btn').style.display = 'none';
+            document.querySelector('.restart-btn').style.display = 'none';
+            currentQuestionIndex = 0;
+            scoreValue = 0;
+            updateProgressBar();
+            showQuestion();
+            updateScore();
+            updateTaskbar();
+        }
+
+        function showQuestion() {
+            const questionElement = document.querySelector('.question');
+            const optionsElement = document.querySelector('.options');
+
+            questionElement.textContent = questions[currentQuestionIndex].question;
+            optionsElement.innerHTML = '';
+
+            questions[currentQuestionIndex].options.forEach(option => {
+                const div = document.createElement('div');
+                div.textContent = option;
+                div.onclick = () => selectOption(div, option);
+                optionsElement.appendChild(div);
+            });
+        }
+
+        function selectOption(div, option) {
+            if (selectedOptionDiv) {
+                selectedOptionDiv.style.backgroundColor = '#f0f0f0';
+            }
+            selectedOptionDiv = div;
+            selectedOptionDiv.dataset.value = option;
+            div.style.backgroundColor = '#d3d3d3';
+        }
+
+        function submitQuiz() {
+            const resultDiv = document.getElementById('result');
+            const scoreDiv = document.getElementById('score');
+
+            if (selectedOptionDiv) {
+                const answer = selectedOptionDiv.dataset.value;
+                if (answer === questions[currentQuestionIndex].correct) {
+                    resultDiv.textContent = 'Correct!';
+                    resultDiv.style.color = 'green';
+                    selectedOptionDiv.style.backgroundColor = 'green';
+                    updateScore(10);
+                } else {
+                    resultDiv.textContent = `Wrong! The correct answer is ${questions[currentQuestionIndex].correct}.`;
+                    resultDiv.style.color = 'red';
+                    selectedOptionDiv.style.backgroundColor = 'red';
+                }
+                resultDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    resultDiv.style.display = 'none';
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < questions.length) {
+                        selectedOptionDiv = null;
+                        updateProgressBar();
+                        showQuestion();
+                        updateTaskbar();
+                    } else {
+                        document.querySelector('.question-container').style.display = 'none';
+                        document.querySelector('.go-home-btn').style.display = 'block';
+                        document.querySelector('.restart-btn').style.display = 'block';
+                        saveScore();
+                    }
+                }, 1000);
+
+                scoreDiv.textContent = `Score: ${scoreValue}`;
+            } else {
+                alert('Please select an option.');
+            }
+        }
+
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBar.style.width = progress + '%';
+        }
+
+        function updateScore(points = 0) {
+            scoreValue += points;
+            document.getElementById('score').textContent = `Score: ${scoreValue}`;
+        }
+
+        function updateTaskbar() {
+            const taskbar = document.getElementById('taskbar');
+            taskbar.textContent = `Question: ${currentQuestionIndex + 1}/${questions.length}`;
+        }
+
+        function saveScore() {
+            localStorage.setItem('quizScore', scoreValue);
+        }
+
+        function goHome() {
+            currentQuestionIndex = 0;
+            scoreValue = 0;
+            document.querySelector('.go-home-btn').style.display = 'none';
+            document.querySelector('.restart-btn').style.display = 'none';
+            document.querySelector('.play-btn').style.display = 'block';
+            document.getElementById('score').textContent = 'Score: 0';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('taskbar').textContent = 'Question: 0/0';
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            scoreValue = 0;
+            document.querySelector('.question-container').style.display = 'block';
+            document.querySelector('.go-home-btn').style.display = 'none';
+            document.querySelector('.restart-btn').style.display = 'none';
+            updateProgressBar();
+            showQuestion();
+            updateScore();
+            updateTaskbar();
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedScore = localStorage.getItem('quizScore');
+            if (savedScore) {
+                scoreValue = parseInt(savedScore, 10);
+                document.getElementById('score').textContent = `Score: ${scoreValue}`;
+            }
+        });
+    </script>
+</body>
+</html>
